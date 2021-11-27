@@ -1,0 +1,13 @@
+{% load thumbnail %}
+<ul>
+  <li>
+    Автор: {{ post.author.get_full_name|default:post.author.username }}
+  </li>
+  <li>
+    Дата публикации: {{ post.pub_date|date:"d E Y" }}
+  </li>
+</ul>
+{% thumbnail post.image "400x400" crop="center" upscale=True as im %}
+  <img src="{{ im.url }}">
+{% endthumbnail %}
+<p>{{ post.text|linebreaks }}</p>

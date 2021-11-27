@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load cache %}
+{% block title %} 
+  {{ title }} 
+{% endblock %}
+{% block content %}
+  <main>
+    {% include 'posts/includes/switcher.html' %}
+    {% if page_obj %}
+    {% for post in page_obj %}
+      {% include 'includes/main.html' %} >
+      {% if post.group %}    
+        <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
+      {% else %}
+        Данный пост не принадлежит какой-либо группе.
+      {% endif %}
+    {% if not forloop.last %}<hr>{% endif %}
+    {% endfor %}
+    {% include 'posts/includes/paginator.html' %}
+    {% else %}
+      <div class='text-center'> 
+        Вы ни на кого не подписаны
+      </div>
+    {% endif %}    
+  </main>
+{% endblock %}
