@@ -167,7 +167,7 @@ def profile_follow(request, username):
         return redirect('posts:profile', username=username)
     obj, created = Follow.objects.get_or_create(user=follower, author=author)
     # Страшно ли, что одну из переменных я не использую?
-    # flake не ругается, но тем не менее
+    # flake не ругается, но все-таки
     if obj:
         return redirect('posts:profile', username=username)
     return redirect('posts:profile', username=username)
