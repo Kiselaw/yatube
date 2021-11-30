@@ -1,7 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
-from django.db import IntegrityError
 
 from .forms import CommentForm, PostForm
 from .models import Follow, Group, Post, User
@@ -9,13 +8,20 @@ from .models import Follow, Group, Post, User
 PAGENUM = 10
 
 
+def paginator(page_number, posts):
+    paginator = Paginator(posts, PAGENUM)
+    page_obj = paginator.get_page(page_number)
+    # Тут почему-то Flake выдает ошибку R504
+    # Почитал в интернете - вроде бы это баг
+    return page_obj
+
+
 def index(request):
     title = 'Последние обновления на сайте'
     template = 'posts/index.html'
     posts = Post.objects.all()
-    paginator = Paginator(posts, PAGENUM)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator(page_number, posts)
     context = {
         'title': title,
         'page_obj': page_obj,
@@ -28,9 +34,8 @@ def group_list(request, slug):
     template = 'posts/group_list.html'
     group = get_object_or_404(Group, slug=slug)
     posts = group.group_post.all()
-    paginator = Paginator(posts, PAGENUM)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator(page_number, posts)
     context = {
         'title': title,
         'group': group,
@@ -44,15 +49,14 @@ def profile(request, username):
     template = 'posts/profile.html'
     client = get_object_or_404(User, username=username)
     posts = client.posts.all()
-    paginator = Paginator(posts, PAGENUM)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    num = paginator.count
+    page_obj = paginator(page_number, posts)
+    num = len(posts)
     if request.user.is_authenticated:
-        try:
-            following = Follow.objects.get(user=request.user, author=client)
-        except Follow.DoesNotExist:
-            following = False
+        following = Follow.objects.filter(
+            user=request.user,
+            author=client
+        ).exists()
         context = {
             'title': title,
             'client': client,
@@ -72,8 +76,8 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     template = 'posts/post_detail.html'
-    post = Post.objects.get(pk=post_id)
-    title = f'Пост {post.text}'
+    post = get_object_or_404(Post, pk=post_id)
+    title = post.text
     user = post.author
     num = user.posts.count()
     form = CommentForm(request.POST or None)
@@ -142,13 +146,12 @@ def add_comment(request, post_id):
 def follow_index(request):
     template = 'posts/follow.html'
     user = request.user
-    title = f'Подписки пользователя {user}'
+    title = user
     follow_posts = Post.objects.filter(
         author__following__user__id=request.user.id
     )
-    paginator = Paginator(follow_posts, PAGENUM)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator(page_number, follow_posts)
     context = {
         'title': title,
         'page_obj': page_obj,
@@ -162,11 +165,11 @@ def profile_follow(request, username):
     follower = request.user
     if follower == author:
         return redirect('posts:profile', username=username)
-    try:
-        Follow.objects.create(user=follower, author=author)
-    except IntegrityError:
+    obj, created = Follow.objects.get_or_create(user=follower, author=author)
+    # Страшно ли, что одну из переменных я не использую?
+    # flake не ругается, но тем не менее
+    if obj:
         return redirect('posts:profile', username=username)
-
     return redirect('posts:profile', username=username)
 
 

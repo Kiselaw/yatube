@@ -1,10 +1,11 @@
 import tempfile
 
 from django import forms
+from django.core.cache import cache
 from django.test import override_settings
 from django.urls import reverse
 
-from posts.models import Follow, Group, Post
+from posts.models import Follow, Post
 from posts.views import PAGENUM
 
 from .test_forms import Fixtures
@@ -12,14 +13,6 @@ from .test_forms import Fixtures
 
 @override_settings(MEDIA_ROOT=tempfile.gettempdir())
 class PostsViewsTests(Fixtures):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.group2 = Group.objects.create(
-            title='Группа',
-            slug='group2-slug',
-            description='Описание',
-        )
 
     def test_pages_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
@@ -119,27 +112,49 @@ class PostsViewsTests(Fixtures):
         posts = response.context['page_obj']
         self.assertNotIn(self.post, posts)
 
+    def test_add_comment(self):
+        """Проверка корректности работы комментариев"""
+        response = self.guest_client.get(
+            reverse('posts:add_comment', kwargs={'post_id': '1'})
+        )
+        self.assertRedirects(response, '/auth/login/?next=/posts/1/comment')
+
     def test_index_cache_working(self):
-        """Проверка, что Посты на главной странице кэшируются"""
+        """Проверка, что посты на главной странице кэшируются"""
         response_1 = self.authorized_client.get(reverse('posts:index'))
-        content_1 = response_1.content
+        context_1 = response_1.context['page_obj']
         Post.objects.filter(pk=0).delete()
         response_2 = self.authorized_client.get(reverse('posts:index'))
-        content_2 = response_2.content
-        self.assertEqual(content_1, content_2)
+        context_2 = response_2.context['page_obj']
+        self.assertEqual(list(context_1), list(context_2))
+        cache.clear()
+        response_3 = self.authorized_client.get(reverse('posts:index'))
+        context_3 = response_3.context['page_obj']
+        self.assertNotEqual(context_1, context_3)
 
     def test_profile_follow_working(self):
-        """Подписка возможна и пост появляется
-        у пользователя на странице /follow"""
+        """Подписка возможна"""
+        author = self.user2
+        try:
+            following_check = Follow.objects.get(user=self.user, author=author)
+        except Follow.DoesNotExist:
+            following_check = False
+        self.assertEqual(following_check, False)
         response = self.authorized_client.get(
             reverse('posts:profile_follow', kwargs={'username': 'auth2'})
         )
-        author = self.user2
         following = Follow.objects.get(user=self.user, author=author)
         self.assertIn(following, Follow.objects.all())
         self.assertRedirects(response, reverse(
             'posts:profile', kwargs={'username': 'auth2'}
         ))
+
+    def test_follow_index_works_correctly_after_follow(self):
+        """Пост появляется у авторизованного
+        пользователя на странице /follow"""
+        self.authorized_client.get(
+            reverse('posts:profile_follow', kwargs={'username': 'auth2'})
+        )
         response_index = self.authorized_client.get(
             reverse('posts:follow_index')
         )
@@ -147,8 +162,7 @@ class PostsViewsTests(Fixtures):
         self.assertIn(self.post2, follow_posts)
 
     def test_profile_unfollow_working(self):
-        """Отписка возможна и пост не появляется
-        у пользователя на странице /follow"""
+        """Отписка возможна"""
         response = self.authorized_client.get(
             reverse('posts:profile_unfollow', kwargs={'username': 'auth2'})
         )
@@ -161,6 +175,12 @@ class PostsViewsTests(Fixtures):
         self.assertRedirects(response, reverse(
             'posts:profile', kwargs={'username': 'auth2'}
         ))
+
+    def test_follow_index_works_correctly_after_unfollow(self):
+        """Пост исчезает у авторизованного пользователя со страницы /follow"""
+        self.authorized_client.get(
+            reverse('posts:profile_unfollow', kwargs={'username': 'auth2'})
+        )
         response_index = self.authorized_client.get(
             reverse('posts:follow_index')
         )
@@ -182,7 +202,7 @@ class PaginatorViewsTest(Fixtures):
         Post.objects.bulk_create(posts)
 
     def test_paginator(self):
-        """Проверка работы паджиинатора"""
+        """Проверка работы паджинатора"""
         page_obj_num = {
             reverse('posts:index'): PAGENUM,
             reverse('posts:index') + '?page=2': 2,

@@ -20,6 +20,11 @@ class Fixtures(TestCase):
             slug='test-slug',
             description='Тестовое описание',
         )
+        cls.group2 = Group.objects.create(
+            title='Группа',
+            slug='group2-slug',
+            description='Описание',
+        )
         small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
