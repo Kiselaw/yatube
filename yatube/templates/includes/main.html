@@ -1,7 +1,8 @@
 {% load thumbnail %}
 <ul>
   <li>
-    Автор: {{ post.author.get_full_name|default:post.author.username }}
+    Автор: <a href="{% url 'posts:profile' post.author %}">
+    {{ post.author.get_full_name|default:post.author.username }}</a>
   </li>
   <li>
     Дата публикации: {{ post.pub_date|date:"d E Y" }}

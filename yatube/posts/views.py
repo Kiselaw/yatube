@@ -10,34 +10,27 @@ PAGENUM = 10
 
 def paginator(page_number, posts):
     paginator = Paginator(posts, PAGENUM)
-    page_obj = paginator.get_page(page_number)
-    # Тут почему-то Flake выдает ошибку R504
-    # Почитал в интернете - вроде бы это баг
-    return page_obj
+    return paginator.get_page(page_number)
 
 
 def index(request):
-    title = 'Последние обновления на сайте'
     template = 'posts/index.html'
     posts = Post.objects.all()
     page_number = request.GET.get('page')
     page_obj = paginator(page_number, posts)
     context = {
-        'title': title,
         'page_obj': page_obj,
     }
     return render(request, template, context)
 
 
 def group_list(request, slug):
-    title = 'Записи сообщества'
     template = 'posts/group_list.html'
     group = get_object_or_404(Group, slug=slug)
-    posts = group.group_post.all()
+    posts = group.posts.all()
     page_number = request.GET.get('page')
     page_obj = paginator(page_number, posts)
     context = {
-        'title': title,
         'group': group,
         'page_obj': page_obj,
     }
@@ -45,31 +38,21 @@ def group_list(request, slug):
 
 
 def profile(request, username):
-    title = 'Профайл пользователя'
     template = 'posts/profile.html'
     client = get_object_or_404(User, username=username)
     posts = client.posts.all()
     page_number = request.GET.get('page')
     page_obj = paginator(page_number, posts)
     num = len(posts)
-    if request.user.is_authenticated:
-        following = Follow.objects.filter(
-            user=request.user,
-            author=client
-        ).exists()
-        context = {
-            'title': title,
-            'client': client,
-            'num': num,
-            'page_obj': page_obj,
-            'following': following,
-        }
-        return render(request, template, context)
+    following = request.user.is_authenticated and Follow.objects.filter(
+        user=request.user,
+        author=client
+    ).exists()
     context = {
-        'title': title,
         'client': client,
         'num': num,
         'page_obj': page_obj,
+        'following': following,
     }
     return render(request, template, context)
 
@@ -77,13 +60,11 @@ def profile(request, username):
 def post_detail(request, post_id):
     template = 'posts/post_detail.html'
     post = get_object_or_404(Post, pk=post_id)
-    title = post.text
     user = post.author
     num = user.posts.count()
     form = CommentForm(request.POST or None)
     comments = post.comments.all()
     context = {
-        'title': title,
         'post': post,
         'num': num,
         'form': form,
@@ -146,14 +127,13 @@ def add_comment(request, post_id):
 def follow_index(request):
     template = 'posts/follow.html'
     user = request.user
-    title = user
     follow_posts = Post.objects.filter(
         author__following__user__id=request.user.id
     )
     page_number = request.GET.get('page')
     page_obj = paginator(page_number, follow_posts)
     context = {
-        'title': title,
+        'user': user,
         'page_obj': page_obj,
     }
     return render(request, template, context)
@@ -165,11 +145,7 @@ def profile_follow(request, username):
     follower = request.user
     if follower == author:
         return redirect('posts:profile', username=username)
-    obj, created = Follow.objects.get_or_create(user=follower, author=author)
-    # Страшно ли, что одну из переменных я не использую?
-    # flake не ругается, но все-таки
-    if obj:
-        return redirect('posts:profile', username=username)
+    Follow.objects.get_or_create(user=follower, author=author)
     return redirect('posts:profile', username=username)
 
 

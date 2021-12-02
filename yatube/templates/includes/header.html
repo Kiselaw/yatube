@@ -38,7 +38,7 @@
     </li>
     {% endwith %}
     <li>
-      Пользователь: {{ user.username }}
+      <a href="{% url 'posts:profile' user %}">Пользователь: {{ user.username }}</a>
     <li>
     {% else %}
     {% with request.resolver_match.view_name as view_name %}

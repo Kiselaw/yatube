@@ -2,10 +2,10 @@ import tempfile
 
 from django import forms
 from django.core.cache import cache
-from django.test import override_settings
+from django.test import Client, override_settings
 from django.urls import reverse
 
-from posts.models import Follow, Post
+from posts.models import Follow, Post, User
 from posts.views import PAGENUM
 
 from .test_forms import Fixtures
@@ -117,6 +117,7 @@ class PostsViewsTests(Fixtures):
         response = self.guest_client.get(
             reverse('posts:add_comment', kwargs={'post_id': '1'})
         )
+        self.assertEqual(len(self.post.comments.all()), 1)
         self.assertRedirects(response, '/auth/login/?next=/posts/1/comment')
 
     def test_index_cache_working(self):
@@ -135,16 +136,19 @@ class PostsViewsTests(Fixtures):
     def test_profile_follow_working(self):
         """Подписка возможна"""
         author = self.user2
-        try:
-            following_check = Follow.objects.get(user=self.user, author=author)
-        except Follow.DoesNotExist:
-            following_check = False
+        following_check = Follow.objects.filter(
+            user=self.user,
+            author=author
+        ).exists()
         self.assertEqual(following_check, False)
         response = self.authorized_client.get(
             reverse('posts:profile_follow', kwargs={'username': 'auth2'})
         )
-        following = Follow.objects.get(user=self.user, author=author)
-        self.assertIn(following, Follow.objects.all())
+        self.assertTrue(Follow.objects.filter(
+            user=self.user,
+            author=author
+        ).exists()
+        )
         self.assertRedirects(response, reverse(
             'posts:profile', kwargs={'username': 'auth2'}
         ))
@@ -152,8 +156,9 @@ class PostsViewsTests(Fixtures):
     def test_follow_index_works_correctly_after_follow(self):
         """Пост появляется у авторизованного
         пользователя на странице /follow"""
-        self.authorized_client.get(
-            reverse('posts:profile_follow', kwargs={'username': 'auth2'})
+        Follow.objects.create(
+            user=self.user,
+            author=self.user2
         )
         response_index = self.authorized_client.get(
             reverse('posts:follow_index')
@@ -163,12 +168,20 @@ class PostsViewsTests(Fixtures):
 
     def test_profile_unfollow_working(self):
         """Отписка возможна"""
+        Follow.objects.create(
+            user=self.user,
+            author=self.user2
+        )
+        self.assertTrue(Follow.objects.filter(
+            user=self.user,
+            author=self.user2
+        ).exists()
+        )
         response = self.authorized_client.get(
             reverse('posts:profile_unfollow', kwargs={'username': 'auth2'})
         )
-        author = self.user2
         try:
-            following = Follow.objects.get(user=self.user, author=author)
+            following = Follow.objects.get(user=self.user, author=self.user2)
         except Follow.DoesNotExist:
             following = None
         self.assertEqual(following, None)
@@ -178,10 +191,15 @@ class PostsViewsTests(Fixtures):
 
     def test_follow_index_works_correctly_after_unfollow(self):
         """Пост исчезает у авторизованного пользователя со страницы /follow"""
-        self.authorized_client.get(
+        unsubscribed_user = User.objects.create_user(
+            username='unsubscribed_user'
+        )
+        authorized_client = Client()
+        authorized_client.force_login(unsubscribed_user)
+        authorized_client.get(
             reverse('posts:profile_unfollow', kwargs={'username': 'auth2'})
         )
-        response_index = self.authorized_client.get(
+        response_index = authorized_client.get(
             reverse('posts:follow_index')
         )
         follow_posts = response_index.context['page_obj']
