@@ -112,12 +112,14 @@ class PostsViewsTests(Fixtures):
         posts = response.context['page_obj']
         self.assertNotIn(self.post, posts)
 
-    def test_add_comment(self):
+    def test_guest_client_can_not_add_comment(self):
         """Проверка корректности работы комментариев"""
+        initial_comments_num = len(self.post.comments.all())
         response = self.guest_client.get(
             reverse('posts:add_comment', kwargs={'post_id': '1'})
         )
-        self.assertEqual(len(self.post.comments.all()), 1)
+        final_comments_num = len(self.post.comments.all())
+        self.assertEqual(final_comments_num, initial_comments_num)
         self.assertRedirects(response, '/auth/login/?next=/posts/1/comment')
 
     def test_index_cache_working(self):
@@ -180,11 +182,11 @@ class PostsViewsTests(Fixtures):
         response = self.authorized_client.get(
             reverse('posts:profile_unfollow', kwargs={'username': 'auth2'})
         )
-        try:
-            following = Follow.objects.get(user=self.user, author=self.user2)
-        except Follow.DoesNotExist:
-            following = None
-        self.assertEqual(following, None)
+        self.assertFalse(Follow.objects.filter(
+            user=self.user,
+            author=self.user2
+        ).exists()
+        )
         self.assertRedirects(response, reverse(
             'posts:profile', kwargs={'username': 'auth2'}
         ))
