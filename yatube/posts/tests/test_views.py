@@ -114,11 +114,14 @@ class PostsViewsTests(Fixtures):
 
     def test_guest_client_can_not_add_comment(self):
         """Проверка корректности работы комментариев"""
-        initial_comments_num = len(self.post.comments.all())
-        response = self.guest_client.get(
-            reverse('posts:add_comment', kwargs={'post_id': '1'})
+        initial_comments_num = self.post.comments.all().count()
+        form_data = {'text': 'Какой-то комментарий'}
+        response = self.guest_client.post(
+            reverse('posts:add_comment', kwargs={'post_id': '1'}),
+            data=form_data,
+            follow=True
         )
-        final_comments_num = len(self.post.comments.all())
+        final_comments_num = self.post.comments.all().count()
         self.assertEqual(final_comments_num, initial_comments_num)
         self.assertRedirects(response, '/auth/login/?next=/posts/1/comment')
 
