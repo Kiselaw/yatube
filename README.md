@@ -93,7 +93,7 @@ python3 manage.py runserver
 
 ### Project status 
 
-At the moment, it is planned to redesign the site to bring it to a more modern and representative look.
+At the moment, it is planned to redesign the site to bring it to a more modern and presentable look.
 
 ### License
 
