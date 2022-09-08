@@ -1,29 +1,24 @@
 {% extends "base.html" %}
 {% block title %}Технологии{% endblock %}
 {% block content %}
-<div class="row">
-  <h1>Вот что я умею</h1>
-  <aside class="col-12 col-md-3">
-    <ul class="list-group list-group-flush">
-      <li class="list-group-item">
-        Python
+<div class="card border-0" style="background: #f6f5f7;">
+  <h4>Проект реализован с помощью следующих технологий:</h4>
+    <ul>
+      <li>
+        Python 3.9.5
       </li>
-      <li class="list-group-item">
-        Django
+      <li>
+        Django 2.2.16
       </li>
-      <li class="list-group-item">
-        HTML (вру)
-      </li>
-      <li class="list-group-item">
-        CSS (наглая ложь)
-      </li>
-      <li class="list-group-item">
-        Java -> Kotlin (желаемое будущее)
+      <li>
+        Bootstrap 5
       </li>
     </ul>
-  </aside>
-  <article class="col-12 col-md-9">
-    <p>Что-то достаточно интересное...</p>
-  </article>
+  <h4>Краткое описание функционала:</h4>  
+    <article class="col-12 col-md-9">
+      <p>Сервис позволяет пользователям создавать свою страницу, подписываться на страницы других пользователей и формировать новостную ленту из подписок.
+      <p>Кроме того, пользователи могут просматривать страницы всех других авторов и оставлять комментарии к записям. При этом посты можно отнести к разным группам, что позволяет пользователям находить авторов по интересам.</p>
+      <p>Авторизованные пользователи также могут полностью редактировать все свои сообщения и комментарии.</p>
+    </article>
 </div>
 {% endblock %} 

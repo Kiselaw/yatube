@@ -13,9 +13,9 @@
       {% if post.group %}   
         <li class="list-group-item">
           Группа: {{ post.group }}
-          <a href="{% url 'posts:group_list' post.group.slug %}">
+          <b><a class="internal-link"href="{% url 'posts:group_list' post.group.slug %}">
             все записи группы
-          </a>
+          </a></b>
       {% else %}
         <li class="list-group-item">
           Данный пост не принадлежит какой-либо группе.
@@ -28,9 +28,9 @@
         Всего постов автора: {{ num }}
       </li>
       <li class="list-group-item">
-        <a href="{% url 'posts:profile' post.author.username %}">
+        <b><a class="internal-link" href="{% url 'posts:profile' post.author.username %}">
           все посты пользователя
-        </a>
+        </a></b>
       </li>
     </ul>
   </aside>
@@ -40,7 +40,7 @@
     {% endthumbnail %}
     <p>{{ post.text|linebreaks }}</p>
     {% if post.author == request.user %}
-    <a class="btn btn-primary" href="{% url 'posts:post_edit' post.pk %}">
+    <a class="btn btn-dark" href="{% url 'posts:post_edit' post.pk %}">
       Редактировать
     </a>
     {% endif %}

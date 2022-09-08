@@ -11,14 +11,14 @@
     {% if request.user.is_authenticated and request.user != client %}
       {% if following %}
         <a
-          class="btn btn-lg btn-light"
+          class="btn btn-lg btn-dark"
           href="{% url 'posts:profile_unfollow' client %}" role="button"
         >
           Отписаться
         </a>
       {% else %}
         <a
-          class="btn btn-lg btn-primary"
+          class="btn btn-lg btn-dark"
           href="{% url 'posts:profile_follow' client %}" role="button"
         >
           Подписаться
@@ -31,7 +31,7 @@
       <ul>
         <li>
           Автор: {{ post.author.get_full_name|default:post.author.username }}
-          <a href="{% url 'posts:profile' client %}">все посты пользователя</a>
+          <b><a class="internal-link" href="{% url 'posts:profile' client %}">все посты пользователя</a></b>
         </li>
         <li>
           Дата публикации: {{ post.pub_date|date:"d E Y" }} 
@@ -41,10 +41,10 @@
       <img src="{{ im.url }}">
       {% endthumbnail %}
       <p> {{ post.text|linebreaks }} </p>
-      <a href="{% url 'posts:post_detail' post.pk %}">подробная информация </a>
+      <b><a class="internal-link" href="{% url 'posts:post_detail' post.pk %}">подробная информация</a></b>
     </article>    
       {% if post.group %}    
-        <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
+        <b><a class="internal-link" href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a></b>
       {% else %}
         Данный пост не принадлежит какой-либо группе.
       {% endif %}

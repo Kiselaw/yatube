@@ -1,20 +1,20 @@
 {% load static %}
-<nav class="navbar navbar-light" style="background-color: lightskyblue"> 
+<nav class="navbar navbar-dark bg-dark" style="background-color: black"> 
   <div class="container"> 
     <a class="navbar-brand" href="{% url 'posts:index' %}"> 
-      <img src={% static 'img/logoY.png' %} width="30" height="30" class="d-inline-block align-top" alt=""> 
-      <span style="color:red">Ya</span>tube
+      <img src={% static 'img/logoY.png' %} width="40" height="40" class="d-inline-block align-top" alt=""> 
+      <font size="+3"><span style="color:#5a1896">Ya</span>tube</font>
     </a>
     <ul class="nav nav-pills">
     {% with request.resolver_match.view_name as view_name %}
     <li class="nav-item"> 
-      <a class="nav-link {% if view_name  == 'about:author' %}active{% endif %}" 
+      <a class="nav-link link-light {% if view_name  == 'about:author' %}active{% endif %}" 
       href="{% url 'about:author' %}">Об авторе</a>
     </li>
     {% endwith %}  
     {% with request.resolver_match.view_name as view_name %}
     <li class="nav-item">
-      <a class="nav-link {% if view_name  == 'about:tech' %}active{% endif %}" 
+      <a class="nav-link link-light {% if view_name  == 'about:tech' %}active{% endif %}" 
       href="{% url 'about:tech' %}">Технологии</a>
     </li>
     {% endwith %}
@@ -33,13 +33,16 @@
     {% endwith %}
     {% with request.resolver_match.view_name as view_name %}
     <li class="nav-item"> 
-        <a class="nav-link link-light {% if view_name  == 'users:logout' %}active{% endif %}" 
-        href="{% url 'users:logout' %}">Выйти</a>
+      <a class="nav-link link-light {% if view_name  == 'users:logout' %}active{% endif %}" 
+      href="{% url 'users:logout' %}">Выйти</a>
     </li>
     {% endwith %}
+    {% with request.resolver_match.view_name as view_name %}
+    <li class="nav-item">
+      <a class="nav-link link-light {% if view_name  == 'posts:profile' %}active{% endif %}"
+      href="{% url 'posts:profile' user %}">Пользователь: {{ user.username }}</a>
     <li>
-      <a href="{% url 'posts:profile' user %}">Пользователь: {{ user.username }}</a>
-    <li>
+    {% endwith %}
     {% else %}
     {% with request.resolver_match.view_name as view_name %}
     <li class="nav-item"> 
